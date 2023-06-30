@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "P4WGaQxi4r3MCvKebGcOsx8+kzUmegKWZIxiRv70J5ZeiAmfxFxj5by5DaENxu/qOTs2COoBxpF58m31M42weQ==",
+  "success": true,
+  "projectFilePath": "/Users/owentaylor/wip/c#/checkandset1/checkandset1.csproj",
+  "expectedPackageFiles": [
+    "/Users/owentaylor/.nuget/packages/nredisstack/0.7.0/nredisstack.0.7.0.nupkg.sha512",
+    "/Users/owentaylor/.nuget/packages/pipelines.sockets.unofficial/2.2.2/pipelines.sockets.unofficial.2.2.2.nupkg.sha512",
+    "/Users/owentaylor/.nuget/packages/stackexchange.redis/2.6.96/stackexchange.redis.2.6.96.nupkg.sha512",
+    "/Users/owentaylor/.nuget/packages/system.io.pipelines/5.0.1/system.io.pipelines.5.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}

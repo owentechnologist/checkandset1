@@ -1,6 +1,7 @@
 This command line program uses LUA scripting server-side to implement check and set behavior in Redis.
 
 It also uses a JSON object as the wrapper for the protected value.
+![JSON_SAMPLE](checkandsetJSONObject.png)
 
 To run: 
 - make sure you have dotnet 7 installed on your system to support C# execution
