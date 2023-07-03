@@ -101,7 +101,7 @@ namespace checkandset{
                 if(null!=r){
                     result = r;
                 }
-                Console.WriteLine("\ngetWithJedisPooled() fetches : " + result);
+                Console.WriteLine("\nGetCheckAndSetJSONValue() fetches : " + result);
             }
             return result;
         }
