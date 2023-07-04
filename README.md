@@ -34,7 +34,7 @@ owenkey1
 What new Value do you wish to set? [use an integer]
 8753991
 What versionID do you want to use? [use an integer]
-The LUA script accepts any integer value for new keys
+The LUA script expects a 0 but accepts any integer value for new keys
 (and sets the versionID to 1)
 0
 

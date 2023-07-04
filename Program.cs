@@ -6,14 +6,28 @@ using System.Diagnostics;
 namespace checkandset{
     public class RedisJSONCheckAndSetLua{
         static string luaString = "local workingVersionID = redis.call('JSON.RESP', KEYS[1], '$.versionID') if not workingVersionID then workingVersionID = 1 else if workingVersionID[1]..'' == ARGV[2]..'' then workingVersionID = ARGV[2] + 1 else if not tonumber(workingVersionID) then workingVersionID = workingVersionID[1] end return tonumber(workingVersionID) end end if redis.call('EXISTS', KEYS[1]) == 0 then redis.call('JSON.SET', KEYS[1], '$', '{\"val\": ' .. ARGV[1] .. '}') end redis.call('JSON.SET', KEYS[1], '$.versionID', workingVersionID) redis.call('JSON.SET', KEYS[1], '$.val', ARGV[1]) if not tonumber(workingVersionID) then workingVersionID = workingVersionID[1] end return tonumber(workingVersionID)";
-
+        static string luaSHA = "TBD";
+        static string luaSHAKeyName = "checkandset1:RedisJSONCheckAndSetLua";
         public static void Main(string[] args){
             string redisEndpoint = "jsonme.centralus.redisenterprise.cache.azure.net:10000";
-            //redisEndpoint = "redis-14154.homelab.local:14154";
+            redisEndpoint = "redis-14154.homelab.local:14154";
             var redisOptions = ConfigurationOptions.Parse(redisEndpoint); // edit to suit
-            redisOptions.Password = "n9ENxshPYpXRUU1lon3qP6ANDJ41iITaAICViF90FwQ="; //for ACRE connections use Access Key
+            //redisOptions.Password = "n9ENxshPYpXRUU1lon3qP6ANDJ41iITaAICViF90FwQ="; //for ACRE connections use Access Key
             
             ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(redisOptions);
+            IDatabase redisDB = redis.GetDatabase();
+            //check to see if our LUASHA value exists under the expected keyname:
+            var psha = redisDB.StringGet(luaSHAKeyName);
+            if(null==(string?)psha){
+                //load the LUA Script ahead of time and store the SHA value
+                Object[] oa = new Object[]{"LOAD",luaString};
+                luaSHA = redisDB.Execute("SCRIPT",oa).ToString();
+                redisDB.StringSet(luaSHAKeyName,luaSHA);
+                Console.WriteLine("New SHA value for LUA script is: "+luaSHA);
+            }else{
+                Console.WriteLine("Found stored SHA value for LUA script: "+psha);
+                luaSHA=psha.ToString();
+            }
             
             Console.WriteLine("This program will use Check and Set logic to modify a key in Redis");
             Console.WriteLine("The key is of type JSON and requires that you have the JSON module installed");
@@ -22,7 +36,7 @@ namespace checkandset{
             Console.WriteLine("\nA Gold-plated version of this program would accept a JSON path as well as the value.");                                    
             Console.WriteLine("(A future version will utilize JSON.MERGE to reduce complexity - once it is available in ACRE)");            
             Console.WriteLine("\nWhat keyName do you wish to use?");
-            string keyName = "casjsonkey";
+            string keyName = "TBD";
             var s = Console.ReadLine();
             if(null!=s){
                 keyName = s;
@@ -33,7 +47,7 @@ namespace checkandset{
             if(null!=s){
                 newValue = s;
             }
-            Console.WriteLine("What versionID do you want to use? [use an integer]\nThe LUA script accepts any integer value for new keys\n(and sets the versionID to 1)");
+            Console.WriteLine("What versionID do you want to use? [use an integer]\nThe LUA script expects a 0 but accepts any integer value for new keys\n(and sets the versionID to 1)");
             long versionID = 0;
             s = Console.ReadLine();
             if(null!=s){
@@ -121,7 +135,7 @@ namespace checkandset{
             List<RedisValue> values = new List<RedisValue>();
             values.Add(value);
             values.Add(versionID.ToString());
-            // Fire the lua script that adds the new value and stores any old value in the rollback attribute and retrieves the VersionID:
+            // Fire the lua script that adds the new value and retrieves the VersionID:
             string s = "";
             try
             {
@@ -169,27 +183,18 @@ namespace checkandset{
             return result;
         }
 
-// New Section of CODE where the duplicate bahavioral functions 
-// do not initiate a connection object, but reuse a presumably shared one
+// New Section of CODE where the functions 
+// do not initiate a connection object, but reuse a shared one
 
         private static long CheckAndSetWithLuaJSONFaster(string keyName, string value, long versionID,IDatabase redisDB){
-            Console.WriteLine($"{Environment.NewLine}CheckAndSetWithLuaJSON() called with args: {keyName}, {value}, {versionID}  ...");
-            //ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(redisOptions);
-            //IDatabase redisDB = redis.GetDatabase();
+            Console.WriteLine($"{Environment.NewLine}CheckAndSetWithLuaJSONFaster() called with args: {keyName}, {value}, {versionID}  ...");
             long newVersionID = 0;
-            // Create the LUA script string for our use:
-            //string luaString = "local changeTime = redis.call('TIME') local putold = redis.call('JSON.RESP', KEYS[1], '$.val') local workingVersionID = redis.call('JSON.RESP', KEYS[1], '$.versionID') if not workingVersionID then workingVersionID = 1 else if workingVersionID[1]..'' == ARGV[2]..'' then workingVersionID = ARGV[2] + 1 else if not tonumber(workingVersionID) then workingVersionID = workingVersionID[1] end return tonumber(workingVersionID) end end if redis.call('EXISTS', KEYS[1]) == 0 then redis.call('JSON.SET', KEYS[1], '$', '{\"val\": ' .. ARGV[1] .. '}') end if putold then redis.call('JSON.SET', KEYS[1], '$.oldval', putold[1]) end redis.call('JSON.SET', KEYS[1], '$.timestamp', changeTime[1] .. ':' .. changeTime[2]) redis.call('JSON.SET', KEYS[1], '$.versionID', workingVersionID) redis.call('JSON.SET', KEYS[1], '$.val', ARGV[1]) if not tonumber(workingVersionID) then workingVersionID = workingVersionID[1] end return tonumber(workingVersionID)";
-            // Create the List of keynames to pass along with the lua script:
-            List<RedisKey> keynamesArray = new List<RedisKey>();
-            keynamesArray.Add(keyName);
-            List<RedisValue> values = new List<RedisValue>();
-            values.Add(value);
-            values.Add(versionID.ToString());
-            // Fire the lua script that adds the new value and stores any old value in the rollback attribute and retrieves the VersionID:
+            // Fire the lua script that adds the new value and retrieves the VersionID:
+            //for kicks I demonstrate using EVALSHA instead of passing the script
             string s = "";
             try
             {
-                var v = redisDB.ScriptEvaluate(luaString, keynamesArray.ToArray(), values.ToArray()).ToString();
+                var v = redisDB.Execute("EVALSHA",new Object[]{luaSHA,1,keyName,value,versionID}).ToString();
                 if(null!=v){
                     s=v;
                 }
