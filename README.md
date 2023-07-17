@@ -124,7 +124,7 @@ testJSONEscapingWithPath called with: test.path.1 and {"nestingArrayInNestedKey2
 
 *****************   ************************    *************
 
-testJSONEscapingWithPath called with: addme and {"NEWSTUFF": {"stuff1": "goodStuff"}} and False
+testJSONEscapingWithPath called with: val and {"NEWSTUFF": {"stuff1": "goodStuff"}} and False
 
         jsonAPIResponse == 1
 
