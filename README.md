@@ -176,7 +176,10 @@ if redis.call('EXISTS', KEYS[1]) == 0 then
 else
     local workingObject = redis.call('JSON.GET', KEYS[1])
     redis.call('JSON.SET', KEYS[1], '$', workingObject)
-    redis.call('JSON.SET', KEYS[1], '$.' .. suppliedJSONPath, suppliedJSONValue)
+    local outcome = redis.call('JSON.SET', KEYS[1], '$.' .. suppliedJSONPath, suppliedJSONValue)
+    if not outcome then
+        return {'JSON API not HAPPY - did you try to use a new path with more than 1 level deep from $? ie: town.small'}
+    end
 end
 
 redis.call('JSON.SET', KEYS[1], '$.versionID', workingVersionID)
@@ -186,6 +189,5 @@ if not tonumber(workingVersionID) then
 end
 
 return workingVersionID
-
 ```
 
