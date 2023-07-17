@@ -66,11 +66,17 @@ namespace checkandset{
             //reset key:
             //testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);   
             
-            //This time Fail with too deep a new PATH:
+            //Hit another new simple PATH:
             jsonValue = "{\"SimpleNumber\": 655}";
-            newPath = "addme.toodeep";
-            //testJSONEscapingWithPath(redis,newPath,jsonValue,false);   
-            
+            newPath = "property";
+            testJSONEscapingWithPath(redis,newPath,jsonValue,false);   
+
+            //Fail with too deeo a PATH:
+            jsonValue = "{\"bigone\": 999995990095}";
+            newPath = "level.two";
+            testJSONEscapingWithPath(redis,newPath,jsonValue,false);   
+            Console.WriteLine("\n^^^^ THAT WAS A DELIBERATE FAILURE CAUSED BY TOO DEEP A PATH ^^^^\n");
+
             //this faster version uses the hard-coded keyname: 'hardCodedKeyname'
             testCASVersion(redis);
             Console.WriteLine("\n\n NOTE That to be even faster than this "+

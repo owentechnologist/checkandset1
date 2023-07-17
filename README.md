@@ -28,8 +28,9 @@ dotnet run
 and read the output to see what occurred : (note the first test fails deliberately with an empty string passed as the argument)
 
 ```
-Found stored SHA value for LUA script: e50b806f903c09f27695760368653353a2dfacc3
-Found stored SHA value for LUA script: 20d0c0921a0123f141ab8b07c02791b142f4288e
+owentaylor@Owens-MacBook-Pro checkandset1 % dotnet run
+New SHA value for LUA script is: e50b806f903c09f27695760368653353a2dfacc3
+New SHA value for LUA script is: 20d0c0921a0123f141ab8b07c02791b142f4288e
 This program will use Check and Set logic to modify a key in Redis
 The key is of type JSON and requires that you have the JSON module installed
 A LUA script handles updating the key with a new value  when the versionID is correct (in a simple, fixed path within the JSON object)
@@ -118,7 +119,7 @@ testJSONEscapingWithPath called with: test.path.1 and {"nestingArrayInNestedKey2
  JSON object: jsonEscapePathTest1 in Redis now looks like this:
 
 {"test.path.1":{"nestingArrayInNestedKey2":{"multiValue":[{"nested1":"a nested simple string with spaces","phone":"712-919-8999"},{"nested2":"a second nested simple string with spaces","phone":"212-921-8239"}]}},"versionID":1}
->> Deleting, Setting, and then Reading Check and Set Value (3 remote operations) took: 00:00:00.0057438
+>> Deleting, Setting, and then Reading Check and Set Value (3 remote operations) took: 00:00:00.0069867
 
 
 *****************   ************************    *************
@@ -134,6 +135,32 @@ testJSONEscapingWithPath called with: addme and {"NEWSTUFF": {"stuff1": "goodStu
 {"test.path.1":{"nestingArrayInNestedKey2":{"multiValue":[{"nested1":"a nested simple string with spaces","phone":"712-919-8999"},{"nested2":"a second nested simple string with spaces","phone":"212-921-8239"}]}},"versionID":2,"addme":{"NEWSTUFF":{"stuff1":"goodStuff"}}}
 
 
+*****************   ************************    *************
+
+testJSONEscapingWithPath called with: property and {"SimpleNumber": 655} and False
+
+        jsonAPIResponse == 2
+
+        Response from Check and Set lua call: 3
+
+ JSON object: jsonEscapePathTest1 in Redis now looks like this:
+
+{"test.path.1":{"nestingArrayInNestedKey2":{"multiValue":[{"nested1":"a nested simple string with spaces","phone":"712-919-8999"},{"nested2":"a second nested simple string with spaces","phone":"212-921-8239"}]}},"versionID":3,"addme":{"NEWSTUFF":{"stuff1":"goodStuff"}},"property":{"SimpleNumber":655}}
+
+
+*****************   ************************    *************
+
+testJSONEscapingWithPath called with: level.two and {"bigone": 999995990095} and False
+
+        jsonAPIResponse == 3
+
+        Response from Check and Set lua call: 1 element(s)
+ERROR returned value from LUA = The input string '1 element(s)' was not in a correct format.
+
+^^^^ THAT WAS A DELIBERATE FAILURE CAUSED BY TOO DEEP A PATH ^^^^
+
+
+
 ************************
 
 Test of reusing RedisConnection across multiple methods ...
@@ -141,10 +168,10 @@ Test of reusing RedisConnection across multiple methods ...
 CheckAndSetWithLuaJSONFaster() called with args: hardCodedKeyname, 200987654, 0  ...
 
         Response from Check and Set lua call: 1
->> Updating Check and Set Value took: 00:00:00.0026998
+>> Updating Check and Set Value took: 00:00:00.0040512
 
 GetCheckAndSetJSONValue() fetches : 200987654
->> Fetching Check and Set Value took: 00:00:00.0035507
+>> Fetching Check and Set Value took: 00:00:00.0034082
         After update -->   value of hardCodedKeyname = 200987654
 
 Deliberately passing the wrong versionID to the CheckAndSetWithLuaJSONFaster() method.
@@ -154,10 +181,10 @@ Trying to set the value to: 999999
 CheckAndSetWithLuaJSONFaster() called with args: hardCodedKeyname, 999999, 9999  ...
 
         Response from Check and Set lua call: 1
->> Updating Check and Set Value took: 00:00:00.0019201
+>> Updating Check and Set Value took: 00:00:00.0041097
 
 GetCheckAndSetJSONValue() fetches : 200987654
->> Fetching Check and Set Value took: 00:00:00.0018310
+>> Fetching Check and Set Value took: 00:00:00.0048193
                 After deliberately failed update -->   value of hardCodedKeyname = 200987654
         [[[[[[{ ALERT }]]]]]]
         Value not updated! You need to refresh your local copy - the expected versionID is: 1
