@@ -60,7 +60,7 @@ namespace checkandset{
             
             //This time do not delete the JSONKEY (update it instead):
             jsonValue = "{\"NEWSTUFF\": {\"stuff1\": \"goodStuff\"}}";
-            string newPath = "addme";
+            string newPath = "val";
             testJSONEscapingWithPath(redis,newPath,jsonValue,false);   
             
             //reset key:
@@ -124,7 +124,14 @@ namespace checkandset{
             Console.WriteLine("Response from JSON.MGET == \n");
             string[] sResult = (string[]) res;
             for(int x= 0; x< sResult.Length;x++){
-                Console.Write("versionID for "+oArray[x]+" is "+sResult[x]+"\n");
+                Console.Write("$.versionID for "+oArray[x]+" is "+sResult[x]+"\n");
+            }
+            oArray =  new object[] { "jsonEscapePathTest1", "hardCodedKeyname","val" };
+            res = redisDB.Execute("JSON.MGET",oArray, CommandFlags.None);
+            Console.WriteLine("\nResponse from JSON.MGET == \n");
+            sResult = (string[]) res;
+            for(int x= 0; x< sResult.Length;x++){
+                Console.Write("$.val for "+oArray[x]+" is "+sResult[x]+"\n");
             }
         }
 

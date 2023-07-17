@@ -196,6 +196,11 @@ GetCheckAndSetJSONValue() fetches : 200987654
 
 versionID for jsonEscapePathTest1 is 3
 versionID for hardCodedKeyname is 1
+
+Response from JSON.MGET == 
+
+$.val for jsonEscapePathTest1 is {"NEWSTUFF":{"stuff1":"goodStuff"}}
+$.val for hardCodedKeyname is 200987654
 ```
 
  The lua logic is somewhat dense 
