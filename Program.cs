@@ -38,25 +38,38 @@ namespace checkandset{
             */
             string jsonPATH = "test.path.1";
             string jsonValue = "";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);
+            Boolean shouldDeleteKey = true;
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);
             jsonValue = "{\"tryme1\": \"a simple string with spaces\"}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);
             jsonValue = "{\"tryme2\": 1234567}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);
             jsonValue = "{\"tryme3\": {\"nested1\": \"a nested simple string with spaces\"}}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);
             jsonValue = "{\"tryme4\": {\"nestedPeers1\": \"a nested simple string with spaces\", \"nestedPeers2\": \"a second nested simple string with spaces\"}}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);
             jsonValue = "{\"usingArray1\": [{\"nested1\": \"a nested simple string with spaces\"},{\"nested2\": \"a second nested simple string with spaces\"}]}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);
             jsonValue = "{\"nestingArrayInNestedKey1\": {\"vsl\": [{\"nested1\": \"a nested simple string with spaces\"},{\"nested2\": \"a second nested simple string with spaces\"}]}}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);   
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);   
             Stopwatch duration = Stopwatch.StartNew();
             jsonValue = "{\"nestingArrayInNestedKey2\": {\"multiValue\": [{\"nested1\": \"a nested simple string with spaces\",\"phone\": \"712-919-8999\"},{\"nested2\": \"a second nested simple string with spaces\",\"phone\": \"212-921-8239\"}]}}";
-            testJSONEscapingWithPath(redis,jsonPATH,jsonValue);   
+            testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);   
             duration.Stop();
             Console.WriteLine(">> Deleting, Setting, and then Reading Check and Set Value (3 remote operations) took: "+duration.Elapsed); 
-
+            
+            //This time do not delete the JSONKEY (update it instead):
+            jsonValue = "{\"NEWSTUFF\": {\"stuff1\": \"goodStuff\"}}";
+            string newPath = "addme";
+            testJSONEscapingWithPath(redis,newPath,jsonValue,false);   
+            
+            //reset key:
+            //testJSONEscapingWithPath(redis,jsonPATH,jsonValue,shouldDeleteKey);   
+            
+            //This time Fail with too deep a new PATH:
+            jsonValue = "{\"SimpleNumber\": 655}";
+            newPath = "addme.toodeep";
+            //testJSONEscapingWithPath(redis,newPath,jsonValue,false);   
             
             //this faster version uses the hard-coded keyname: 'hardCodedKeyname'
             testCASVersion(redis);
@@ -101,15 +114,23 @@ namespace checkandset{
         //local suppliedJSONPath=ARGV[1] 
         //local suppliedJSONValue=ARGV[2] 
         //local suppliedVersionID=ARGV[3] 
-        private static void testJSONEscapingWithPath(ConnectionMultiplexer redis, string jsonPath, string jsonValue){
+        private static void testJSONEscapingWithPath(ConnectionMultiplexer redis, string jsonPath, string jsonValue,Boolean shouldDeleteKey){
             Console.WriteLine("\n\n*****************   ************************    *************\n\n"+
-             "testJSONEscapingWithPath called with: "+jsonPath+" and "+jsonValue);
+             "testJSONEscapingWithPath called with: "+jsonPath+" and "+jsonValue+" and "+shouldDeleteKey);
             string keyName = "jsonEscapePathTest1";
             long versionID = 0;
             long newVersionID = 0;
             IDatabase redisDB = redis.GetDatabase();
+            var redisJSON = redisDB.JSON();
+
             // preparation for the test - delete any old key with the hard-coded name 
-            redisDB.KeyDelete(keyName); // result doesn't matter 
+            if(shouldDeleteKey){
+                redisDB.KeyDelete(keyName); // result doesn't matter 
+            }else{
+                var jsonAPIResponse = redisJSON.Get(key: keyName,path: "versionID");//no other args means just value returned 
+                Console.WriteLine("\n\tjsonAPIResponse == "+jsonAPIResponse);
+                versionID = (long)jsonAPIResponse;
+            }
             
             var s = "";
             try{
@@ -122,9 +143,8 @@ namespace checkandset{
                 s = s.Trim();
                 Console.WriteLine("\n\tResponse from Check and Set lua call: " + s);
                 newVersionID = long.Parse(s);
-                var redisJSON = redisDB.JSON();
                 var jsonObjectInRedis = redisJSON.Get(keyName); 
-                Console.WriteLine("\n JSON object in Redis now looks like this:\n\n"+jsonObjectInRedis);
+                Console.WriteLine("\n JSON object: "+keyName+" in Redis now looks like this:\n\n"+jsonObjectInRedis);
             }
             catch (Exception ex){
                 Console.WriteLine("ERROR returned value from LUA = " + ex.Message);
