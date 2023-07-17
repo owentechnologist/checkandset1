@@ -194,8 +194,8 @@ GetCheckAndSetJSONValue() fetches : 200987654
 
  Response from JSON.MGET == 
 
-versionID for jsonEscapePathTest1 is 3
-versionID for hardCodedKeyname is 1
+$.versionID for jsonEscapePathTest1 is 3
+$.versionID for hardCodedKeyname is 1
 
 Response from JSON.MGET == 
 
