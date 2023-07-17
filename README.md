@@ -191,6 +191,11 @@ GetCheckAndSetJSONValue() fetches : 200987654
 
 
  NOTE That to be even faster than this - wherever there are multiple Redis operations, they should be placed into a pipeline and executed in a single network call
+
+ Response from JSON.MGET == 
+
+versionID for jsonEscapePathTest1 is 3
+versionID for hardCodedKeyname is 1
 ```
 
  The lua logic is somewhat dense 

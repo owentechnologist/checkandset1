@@ -15,10 +15,10 @@ namespace checkandset{
         static string luaSimpleSHAKeyName = "checkandset1:RedisJSONCheckAndSetLuaSimple";
         static string luaPathSHAKeyName = "checkandset1:RedisJSONCheckAndSetLuaPath";
         public static void Main(string[] args){
-            string redisEndpoint = "jsonme.centralus.redisenterprise.cache.azure.net:10000";
-            redisEndpoint = "redis-14154.homelab.local:14154";
+            string redisEndpoint = "searchme.southcentralus.redisenterprise.cache.azure.net:10000";
+            //redisEndpoint = "redis-14154.homelab.local:14154";
             var redisOptions = ConfigurationOptions.Parse(redisEndpoint); // edit to suit
-            //redisOptions.Password = "n9ENxshPYpXRUU1lon3qP6ANDJ41iITaAICViF90FwQ="; //for ACRE connections use Access Key            
+            redisOptions.Password = "n3Ce6xxqrNy95fg8L7paazrvIX6zkFNAZZqGNhHcrhk="; //for ACRE connections use Access Key            
             ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(redisOptions);
             setupSHAValues(redis);
             
@@ -82,7 +82,9 @@ namespace checkandset{
             Console.WriteLine("\n\n NOTE That to be even faster than this "+
             "- wherever there are multiple Redis operations,"+
             " they should be placed into a pipeline and executed"+
-            " in a single network call");
+            " in a single network call\n");
+            
+            doJSONMGET(redis); //test JSON.MGET from c#
         }
 
 // functions 
@@ -113,6 +115,16 @@ namespace checkandset{
             }else{
                 Console.WriteLine("Found stored SHA value for LUA script: "+tempSHA);
                 luaPathSHA=tempSHA.ToString();
+            }
+        }
+        private static void doJSONMGET(ConnectionMultiplexer redis){
+            IDatabase redisDB = redis.GetDatabase();
+            object[] oArray =  new object[] { "jsonEscapePathTest1", "hardCodedKeyname","versionID" };
+            var res = redisDB.Execute("JSON.MGET",oArray, CommandFlags.None);
+            Console.WriteLine("Response from JSON.MGET == \n");
+            string[] sResult = (string[]) res;
+            for(int x= 0; x< sResult.Length;x++){
+                Console.Write("versionID for "+oArray[x]+" is "+sResult[x]+"\n");
             }
         }
 
